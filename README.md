@@ -218,7 +218,7 @@ function startExperiment() {
 // Enviar resultados a Google Sheets
 async function sendData() {
   const payload = {...userData, results};
-  const url = "TU_WEB_APP_URL"; // reemplaza con tu Web App URL
+  const url = "https://script.google.com/macros/s/AKfycbzFYWXOcdlOmPH8wM65zGUu8tZ0ehv8V8dy00CTctOFjsO1RQa_pHxeJL1rrwvjnaQz_Q/exec"; // reemplaza con tu Web App URL
 
   try {
     await fetch(url, {
