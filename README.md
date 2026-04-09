@@ -659,9 +659,9 @@
             soundDuration: 2.5, // seconds
             baseFrequency: 440, // Hz (A4)
             frequencies: [220, 330, 440, 523, 659, 784], // Various musical frequencies
-            baseVolume: 0.3,
-            modulationDepth: 0.15, // How much the amplitude varies
-            modulationFrequency: 2 // Hz - speed of amplitude variation
+            baseVolume: 0.0,
+            modulationDepth: 1, // How much the amplitude varies
+            modulationFrequency: 1 // Hz - speed of amplitude variation
         };
 
         // ========== Experiment State ==========
