@@ -20,34 +20,11 @@ body{
   display:flex; justify-content:center; padding:24px;
 }
 .container{width:100%; max-width:720px}
-h1{font-weight:600; letter-spacing:.3px}
-h2{font-weight:600}
-p{color:var(--muted)}
-.card{
-  background:var(--card); border:1px solid var(--border); border-radius:16px; padding:22px; margin-top:18px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.35);
-}
-label{display:block; margin:10px 0; color:var(--muted)}
-input, select{
-  width:100%; padding:12px 14px; margin-top:6px; border-radius:12px; border:1px solid var(--border);
-  background:#0c0f14; color:var(--text); outline:none;
-}
-input:focus, select:focus{border-color:var(--accent-2)}
-.row{display:flex; gap:10px; flex-wrap:wrap; justify-content:center}
-button{
-  border:none; border-radius:999px; padding:12px 18px; font-size:15px; cursor:pointer;
-  background:#1f2430; color:var(--text); border:1px solid var(--border);
-  transition: transform .05s ease, box-shadow .15s ease, background .15s ease;
-}
-button.primary{background:linear-gradient(135deg, var(--accent), var(--accent-2)); color:#08120f; border:none}
-button:hover{transform: translateY(-1px); box-shadow:0 8px 18px rgba(0,0,0,.35)}
-button:active{transform: translateY(0)}
+.card{background:var(--card); border-radius:16px; padding:22px; margin-top:18px}
 .hidden{display:none}
-.bar{height:10px; background:#0c0f14; border-radius:999px; overflow:hidden; border:1px solid var(--border); margin:12px 0 16px}
-.progress{height:100%; width:0%; background:linear-gradient(90deg, var(--accent), var(--accent-2))}
-.status{font-size:14px; color:var(--muted)}
-.question{font-size:18px; margin-top:10px}
-.center{display:flex; justify-content:center; align-items:center}
+.row{display:flex; gap:10px; justify-content:center}
+button{padding:12px 18px; border-radius:999px; cursor:pointer}
+button.primary{background:linear-gradient(135deg, var(--accent), var(--accent-2)); border:none}
 </style>
 </head>
 <body>
@@ -55,50 +32,30 @@ button:active{transform: translateY(0)}
 <h1>Experimento de Percepción Auditiva</h1>
 
 <div id="intro" class="card">
-  <p>Escucharás pares de sonidos y deberás indicar cuál suena más fuerte o si no percibes diferencia.</p>
-
-  <label>Edad
-    <input type="number" id="edad" placeholder="Introduce tu edad" />
-  </label>
-
+  <label>Edad<input type="number" id="edad"></label>
   <label>Conocimientos musicales
     <select id="musica">
       <option value="ninguno">Sin conocimientos</option>
-      <option value="basico">Estudios básicos</option>
-      <option value="medio">Estudios medios</option>
-      <option value="superior">Estudios superiores</option>
+      <option value="basico">Básico</option>
+      <option value="medio">Medio</option>
+      <option value="superior">Superior</option>
     </select>
   </label>
-
-  <div class="center">
-    <button class="primary" onclick="goCalibration()">Continuar</button>
-  </div>
+  <button class="primary" onclick="goCalibration()">Continuar</button>
 </div>
 
 <div id="calibration" class="card hidden">
-  <h2>Calibración</h2>
-  <p>Ajusta el volumen hasta que el sonido sea cómodo (ni muy bajo ni molesto).</p>
-  <div class="row">
-    <button onclick="playCalibration()">Reproducir sonido</button>
-    <button class="primary" onclick="startExperiment()">Comenzar experimento</button>
-  </div>
+  <button onclick="playCalibration()">Probar sonido</button>
+  <button class="primary" onclick="startExperiment()">Comenzar</button>
 </div>
 
 <div id="experiment" class="card hidden">
-  <div class="status" id="status"></div>
-  <div class="bar"><div class="progress" id="progress"></div></div>
-
-  <div class="center">
-    <button onclick="playTrial()">Reproducir sonidos</button>
-  </div>
-
+  <div id="status"></div>
+  <button onclick="playTrial()">Reproducir</button>
   <div id="question" class="hidden">
-    <p class="question">¿Cuál suena más fuerte?</p>
-    <div class="row">
-      <button onclick="answer(1)">Primero</button>
-      <button onclick="answer(2)">Segundo</button>
-      <button onclick="answer(0)">No hay diferencia</button>
-    </div>
+    <button onclick="answer(1)">Primero</button>
+    <button onclick="answer(2)">Segundo</button>
+    <button onclick="answer(0)">Iguales</button>
   </div>
 </div>
 </div>
@@ -109,138 +66,97 @@ const freqs = [100, 500, 2000];
 const types = ["sine", "sawtooth"];
 let trials = [];
 let currentTrial = 0;
-let results = [];
-let userData = {};
 
-// Generar trials: 15 cambios únicos por tipo (sinusoidal / sierra), de 1 a 5 dB, sin repetir magnitud por tipo.
-// Total: 30 pruebas (15 por tipo), distribuidas aleatoriamente en las 3 frecuencias.
 function generateTrials() {
   trials = [];
 
   types.forEach(type => {
-    const magnitudes = [1, 2, 3, 4, 5];
+    const magnitudes = [1,2,3,4,5];
 
-    // Crear exactamente mitad ascendente y mitad descendente (15 → 7 y 8)
-    let stepsPool = [];
-
-    magnitudes.forEach(mag => {
-      // cada magnitud aparece 3 veces (por 3 frecuencias)
-      stepsPool.push(mag, mag, mag);
+    // crear 15 steps únicos
+    let steps = [];
+    magnitudes.forEach(m => {
+      steps.push(m, m, m);
     });
 
-    // Mezclar magnitudes
-    stepsPool.sort(() => Math.random() - 0.5);
+    // asignar signos equilibrados
+    let half = Math.floor(steps.length/2);
+    let signed = steps.map((m,i)=> i<half?m:-m);
+    signed.sort(()=>Math.random()-0.5);
 
-    // Asignar signos: mitad positivos, mitad negativos
-    const half = Math.floor(stepsPool.length / 2);
-    const signedSteps = stepsPool.map((mag, i) => i < half ? mag : -mag);
-
-    // Mezclar signos para evitar patrón
-    signedSteps.sort(() => Math.random() - 0.5);
-
-    // Asignar a frecuencias
-    let index = 0;
-    freqs.forEach(freq => {
-      for (let i = 0; i < 5; i++) {
-        trials.push({ type, freq, step: signedSteps[index++] });
+    let idx=0;
+    freqs.forEach(freq=>{
+      for(let i=0;i<5;i++){
+        trials.push({type,freq,step:signed[idx++]});
       }
     });
   });
-      });
-    });
-  });
 
-  // Mezclar orden (sin patrón)
-  trials.sort(() => Math.random() - 0.5);
+  trials.sort(()=>Math.random()-0.5);
 }
 
-}
+function dbToGain(db){return Math.pow(10, db/20);}
 
-function dbToGain(db) { return Math.pow(10, db / 20); }
+function playTone(freq,type,gainValue,startTime){
+  const osc=audioCtx.createOscillator();
+  const gain=audioCtx.createGain();
+  osc.type=type;
+  osc.frequency.value=freq;
 
-function playTone(freq, type, gainValue, startTime) {
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = type;
-  osc.frequency.value = freq;
-  gain.gain.value = gainValue;
+  // evitar clicks + mejor percepción
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(gainValue, startTime+0.05);
+  gain.gain.setValueAtTime(gainValue, startTime+0.95);
+  gain.gain.linearRampToValueAtTime(0, startTime+1);
+
   osc.connect(gain).connect(audioCtx.destination);
   osc.start(startTime);
-  osc.stop(startTime + 1);
+  osc.stop(startTime+1);
 }
 
-function playCalibration() {
-  const now = audioCtx.currentTime;
-  playTone(500, "sine", dbToGain(0), now);
+function playCalibration(){
+  playTone(500,"sine",dbToGain(-10),audioCtx.currentTime);
 }
 
-function playTrial() {
-  const trial = trials[currentTrial];
-  const baseGain = dbToGain(0);
-  const alteredGain = dbToGain(trial.step);
-  const firstIsAltered = Math.random() > 0.5;
+function playTrial(){
+  const t=trials[currentTrial];
+
+  // base más bajo para notar mejor diferencias
+  const baseDb = -10;
+  const baseGain = dbToGain(baseDb);
+  const alteredGain = dbToGain(baseDb + t.step);
+
+  const firstAltered = Math.random()>0.5;
   const now = audioCtx.currentTime;
 
-  if (trial.step === 0) {
-    playTone(trial.freq, trial.type, baseGain, now);
-    playTone(trial.freq, trial.type, baseGain, now + 1.5);
-    trial.correct = 0;
-  } else if (firstIsAltered) {
-    playTone(trial.freq, trial.type, alteredGain, now);
-    playTone(trial.freq, trial.type, baseGain, now + 1.5);
-    trial.correct = 1;
-  } else {
-    playTone(trial.freq, trial.type, baseGain, now);
-    playTone(trial.freq, trial.type, alteredGain, now + 1.5);
-    trial.correct = 2;
+  if(firstAltered){
+    playTone(t.freq,t.type,alteredGain,now);
+    playTone(t.freq,t.type,baseGain,now+1.5);
+    t.correct=1;
+  }else{
+    playTone(t.freq,t.type,baseGain,now);
+    playTone(t.freq,t.type,alteredGain,now+1.5);
+    t.correct=2;
   }
 
   document.getElementById("question").classList.remove("hidden");
 }
 
-function answer(choice) {
-  const trial = trials[currentTrial];
-  results.push({ ...trial, choice, correct: trial.correct === choice });
-
+function answer(c){
   currentTrial++;
   document.getElementById("question").classList.add("hidden");
-  updateProgress();
-
-  if (currentTrial >= trials.length) {
-    sendData();
-  } else {
-    document.getElementById("status").innerText = `Prueba ${currentTrial + 1} de ${trials.length}`;
-  }
+  if(currentTrial>=trials.length){alert("Fin");}
 }
 
-function updateProgress() {
-  const percent = (currentTrial / trials.length) * 100;
-  document.getElementById("progress").style.width = percent + "%";
-}
-
-function goCalibration() {
-  userData.edad = document.getElementById("edad").value;
-  userData.musica = document.getElementById("musica").value;
+function goCalibration(){
   document.getElementById("intro").classList.add("hidden");
   document.getElementById("calibration").classList.remove("hidden");
 }
 
-function startExperiment() {
+function startExperiment(){
   generateTrials();
   document.getElementById("calibration").classList.add("hidden");
   document.getElementById("experiment").classList.remove("hidden");
-  document.getElementById("status").innerText = `Prueba 1 de ${trials.length}`;
-  updateProgress();
-}
-
-async function sendData() {
-  const payload = {...userData, results};
-  const url = "https://script.google.com/macros/s/AKfycbzFYWXOcdlOmPH8wM65zGUu8tZ0ehv8V8dy00CTctOFjsO1RQa_pHxeJL1rrwvjnaQz_Q/exec";
-  try {
-    await fetch(url, { method:"POST", body: JSON.stringify(payload), headers: {"Content-Type":"application/json"} });
-  } catch(e) { console.error("Error enviando datos", e); }
-
-  document.body.innerHTML = '<div class="container"><div class="card"><h2>Gracias por participar</h2></div></div>';
 }
 </script>
 </body>
