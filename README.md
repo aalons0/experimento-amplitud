@@ -112,22 +112,21 @@ let currentTrial = 0;
 let results = [];
 let userData = {};
 
-// Generar trials: 5 variaciones únicas por tipo de onda y frecuencia
+// Generar trials: cubrir todos los intervalos de 0.5dB hasta 5dB, tanto aumentos como disminuciones, únicos por tipo de onda
 function generateTrials() {
   trials = [];
   types.forEach(type => {
-    const usedSteps = new Set();
-    freqs.forEach(freq => {
-      for (let i = 1; i <= 5; i++) {
-        let step;
-        do {
-          step = (Math.random() > 0.5 ? 1 : -1) * 0.5 * i;
-        } while (usedSteps.has(step));
-        usedSteps.add(step);
+    const steps = [];
+    for (let i = 1; i <= 10; i++) { // 5 aumentos y 5 disminuciones
+      steps.push(0.5 * i); // aumento
+      steps.push(-0.5 * i); // disminución
+    }
+    for (const freq of freqs) {
+      steps.forEach(step => {
         trials.push({ type, freq, step });
-      }
+      });
       trials.push({ type, freq, step: 0 }); // sin diferencia
-    });
+    }
   });
   trials.sort(() => Math.random() - 0.5);
   trials = trials.slice(0, 30);
