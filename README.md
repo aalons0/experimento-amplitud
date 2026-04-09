@@ -119,24 +119,30 @@ function playCalibration(){
 }
 
 function playTrial(){
-  const t=trials[currentTrial];
+  const t = trials[currentTrial];
 
-  // base más bajo para notar mejor diferencias
+  // Nivel base CONSTANTE para todas las pruebas
   const baseDb = -10;
   const baseGain = dbToGain(baseDb);
+
+  // Segundo sonido siempre es el que varía
   const alteredGain = dbToGain(baseDb + t.step);
 
-  const firstAltered = Math.random()>0.5;
   const now = audioCtx.currentTime;
 
-  if(firstAltered){
-    playTone(t.freq,t.type,alteredGain,now);
-    playTone(t.freq,t.type,baseGain,now+1.5);
-    t.correct=1;
-  }else{
-    playTone(t.freq,t.type,baseGain,now);
-    playTone(t.freq,t.type,alteredGain,now+1.5);
-    t.correct=2;
+  // PRIMER sonido: SIEMPRE base (sin variación)
+  playTone(t.freq, t.type, baseGain, now);
+
+  // SEGUNDO sonido: SIEMPRE el modificado
+  playTone(t.freq, t.type, alteredGain, now + 1.5);
+
+  // Determinar respuesta correcta
+  if (t.step > 0) {
+    t.correct = 2; // segundo más fuerte
+  } else if (t.step < 0) {
+    t.correct = 1; // primero más fuerte
+  } else {
+    t.correct = 0; // iguales
   }
 
   document.getElementById("question").classList.remove("hidden");
