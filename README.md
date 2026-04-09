@@ -71,18 +71,15 @@ function generateTrials() {
   trials = [];
 
   types.forEach(type => {
-    const magnitudes = [1,2,3,4,5];
+    const magnitudes = [5,10,15,20,25]; // ahora intervalos de 5 dB
     let steps = [];
 
-    // cada magnitud x3 frecuencias
     magnitudes.forEach(m => { steps.push(m, m, m); });
 
-    // mitad positivos, mitad negativos
     let half = Math.floor(steps.length/2);
     let signed = steps.map((m,i)=> i<half?m:-m);
     signed.sort(()=>Math.random()-0.5);
 
-    // asignar a frecuencias sin mezclar tipos
     let idx = 0;
     freqs.forEach(freq => {
       for(let i=0;i<5;i++){
@@ -91,7 +88,6 @@ function generateTrials() {
     });
   });
 
-  // mezclar solo el orden de los pares, no los tipos dentro de cada par
   trials.sort(() => Math.random()-0.5);
 }
 
@@ -125,9 +121,7 @@ function playTrial(){
 
   const now = audioCtx.currentTime;
 
-  // Primer sonido: siempre mismo nivel
   playTone(t.freq, t.type, baseGain, now);
-  // Segundo sonido: solo este cambia
   playTone(t.freq, t.type, alteredGain, now+1.5);
 
   if(t.step>0) t.correct=2;
