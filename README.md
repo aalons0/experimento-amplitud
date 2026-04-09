@@ -112,24 +112,48 @@ let currentTrial = 0;
 let results = [];
 let userData = {};
 
-// Generar trials: cubrir todos los intervalos de 1dB hasta 5dB, tanto aumentos como disminuciones, únicos por tipo de onda
+// Generar trials: 15 cambios únicos por tipo (sinusoidal / sierra), de 1 a 5 dB, sin repetir magnitud por tipo.
+// Total: 30 pruebas (15 por tipo), distribuidas aleatoriamente en las 3 frecuencias.
 function generateTrials() {
   trials = [];
+
   types.forEach(type => {
-    const steps = [];
-    for (let i = 1; i <= 5; i++) { // 5 aumentos y 5 disminuciones
-      steps.push(1 * i); // aumento 1dB
-      steps.push(-1 * i); // disminución 1dB
-    }
-    for (const freq of freqs) {
-      steps.forEach(step => {
-        trials.push({ type, freq, step });
-      });
-      trials.push({ type, freq, step: 0 }); // sin diferencia
-    }
+    const magnitudes = [1, 2, 3, 4, 5];
+
+    // Crear exactamente mitad ascendente y mitad descendente (15 → 7 y 8)
+    let stepsPool = [];
+
+    magnitudes.forEach(mag => {
+      // cada magnitud aparece 3 veces (por 3 frecuencias)
+      stepsPool.push(mag, mag, mag);
+    });
+
+    // Mezclar magnitudes
+    stepsPool.sort(() => Math.random() - 0.5);
+
+    // Asignar signos: mitad positivos, mitad negativos
+    const half = Math.floor(stepsPool.length / 2);
+    const signedSteps = stepsPool.map((mag, i) => i < half ? mag : -mag);
+
+    // Mezclar signos para evitar patrón
+    signedSteps.sort(() => Math.random() - 0.5);
+
+    // Asignar a frecuencias
+    let index = 0;
+    freqs.forEach(freq => {
+      for (let i = 0; i < 5; i++) {
+        trials.push({ type, freq, step: signedSteps[index++] });
+      }
+    });
   });
+      });
+    });
+  });
+
+  // Mezclar orden (sin patrón)
   trials.sort(() => Math.random() - 0.5);
-  trials = trials.slice(0, 30);
+}
+
 }
 
 function dbToGain(db) { return Math.pow(10, db / 20); }
