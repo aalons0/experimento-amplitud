@@ -1,4 +1,3 @@
-# experimento-amplitud
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -24,21 +23,17 @@ body{
 h1{font-weight:600; letter-spacing:.3px}
 h2{font-weight:600}
 p{color:var(--muted)}
-
 .card{
   background:var(--card); border:1px solid var(--border); border-radius:16px; padding:22px; margin-top:18px;
   box-shadow: 0 10px 30px rgba(0,0,0,.35);
 }
-
 label{display:block; margin:10px 0; color:var(--muted)}
 input, select{
   width:100%; padding:12px 14px; margin-top:6px; border-radius:12px; border:1px solid var(--border);
   background:#0c0f14; color:var(--text); outline:none;
 }
 input:focus, select:focus{border-color:var(--accent-2)}
-
 .row{display:flex; gap:10px; flex-wrap:wrap; justify-content:center}
-
 button{
   border:none; border-radius:999px; padding:12px 18px; font-size:15px; cursor:pointer;
   background:#1f2430; color:var(--text); border:1px solid var(--border);
@@ -47,15 +42,11 @@ button{
 button.primary{background:linear-gradient(135deg, var(--accent), var(--accent-2)); color:#08120f; border:none}
 button:hover{transform: translateY(-1px); box-shadow:0 8px 18px rgba(0,0,0,.35)}
 button:active{transform: translateY(0)}
-
 .hidden{display:none}
-
 .bar{height:10px; background:#0c0f14; border-radius:999px; overflow:hidden; border:1px solid var(--border); margin:12px 0 16px}
 .progress{height:100%; width:0%; background:linear-gradient(90deg, var(--accent), var(--accent-2))}
-
 .status{font-size:14px; color:var(--muted)}
 .question{font-size:18px; margin-top:10px}
-
 .center{display:flex; justify-content:center; align-items:center}
 </style>
 </head>
@@ -121,21 +112,25 @@ let currentTrial = 0;
 let results = [];
 let userData = {};
 
-// Generar trials: 5 variaciones por combinación + 1 sin diferencia
+// Generar trials: 5 variaciones únicas por tipo de onda y frecuencia + 1 sin diferencia
 function generateTrials() {
   trials = [];
   types.forEach(type => {
     freqs.forEach(freq => {
+      const usedSteps = new Set();
       for (let i = 1; i <= 5; i++) {
-        let step = (Math.random() > 0.5 ? 1 : -1) * 0.5 * i;
+        let step;
+        do {
+          step = (Math.random() > 0.5 ? 1 : -1) * 0.5 * i;
+        } while (usedSteps.has(step));
+        usedSteps.add(step);
         trials.push({ type, freq, step });
       }
-      // añadir 1 trial sin diferencia
-      trials.push({ type, freq, step: 0 });
+      trials.push({ type, freq, step: 0 }); // sin diferencia
     });
   });
   trials.sort(() => Math.random() - 0.5);
-  trials = trials.slice(0,30);
+  trials = trials.slice(0, 30);
 }
 
 function dbToGain(db) { return Math.pow(10, db / 20); }
@@ -153,7 +148,7 @@ function playTone(freq, type, gainValue, startTime) {
 
 function playCalibration() {
   const now = audioCtx.currentTime;
-  playTone(500,"sine",dbToGain(0),now);
+  playTone(500, "sine", dbToGain(0), now);
 }
 
 function playTrial() {
@@ -215,20 +210,12 @@ function startExperiment() {
   updateProgress();
 }
 
-// Enviar resultados a Google Sheets
 async function sendData() {
   const payload = {...userData, results};
-  const url = "https://script.google.com/macros/s/AKfycbzFYWXOcdlOmPH8wM65zGUu8tZ0ehv8V8dy00CTctOFjsO1RQa_pHxeJL1rrwvjnaQz_Q/exec"; // reemplaza con tu Web App URL
-
+  const url = "https://script.google.com/macros/s/AKfycbzFYWXOcdlOmPH8wM65zGUu8tZ0ehv8V8dy00CTctOFjsO1RQa_pHxeJL1rrwvjnaQz_Q/exec";
   try {
-    await fetch(url, {
-      method:"POST",
-      body: JSON.stringify(payload),
-      headers: {"Content-Type":"application/json"}
-    });
-  } catch(e) {
-    console.error("Error enviando datos", e);
-  }
+    await fetch(url, { method:"POST", body: JSON.stringify(payload), headers: {"Content-Type":"application/json"} });
+  } catch(e) { console.error("Error enviando datos", e); }
 
   document.body.innerHTML = '<div class="container"><div class="card"><h2>Gracias por participar</h2></div></div>';
 }
