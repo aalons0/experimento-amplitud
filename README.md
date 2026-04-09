@@ -72,38 +72,37 @@ function generateTrials() {
 
   types.forEach(type => {
     const magnitudes = [1,2,3,4,5];
-
-    // crear 15 steps únicos
     let steps = [];
-    magnitudes.forEach(m => {
-      steps.push(m, m, m);
-    });
 
-    // asignar signos equilibrados
+    // cada magnitud x3 frecuencias
+    magnitudes.forEach(m => { steps.push(m, m, m); });
+
+    // mitad positivos, mitad negativos
     let half = Math.floor(steps.length/2);
     let signed = steps.map((m,i)=> i<half?m:-m);
     signed.sort(()=>Math.random()-0.5);
 
-    let idx=0;
-    freqs.forEach(freq=>{
+    // asignar a frecuencias sin mezclar tipos
+    let idx = 0;
+    freqs.forEach(freq => {
       for(let i=0;i<5;i++){
-        trials.push({type,freq,step:signed[idx++]});
+        trials.push({type:type,freq:freq,step:signed[idx++]});
       }
     });
   });
 
-  trials.sort(()=>Math.random()-0.5);
+  // mezclar solo el orden de los pares, no los tipos dentro de cada par
+  trials.sort(() => Math.random()-0.5);
 }
 
 function dbToGain(db){return Math.pow(10, db/20);}
 
 function playTone(freq,type,gainValue,startTime){
-  const osc=audioCtx.createOscillator();
-  const gain=audioCtx.createGain();
-  osc.type=type;
-  osc.frequency.value=freq;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
 
-  // evitar clicks + mejor percepción
   gain.gain.setValueAtTime(0, startTime);
   gain.gain.linearRampToValueAtTime(gainValue, startTime+0.05);
   gain.gain.setValueAtTime(gainValue, startTime+0.95);
@@ -120,30 +119,20 @@ function playCalibration(){
 
 function playTrial(){
   const t = trials[currentTrial];
-
-  // Nivel base CONSTANTE para todas las pruebas
   const baseDb = -10;
   const baseGain = dbToGain(baseDb);
-
-  // Segundo sonido siempre es el que varía
   const alteredGain = dbToGain(baseDb + t.step);
 
   const now = audioCtx.currentTime;
 
-  // PRIMER sonido: SIEMPRE base (sin variación)
+  // Primer sonido: siempre mismo nivel
   playTone(t.freq, t.type, baseGain, now);
+  // Segundo sonido: solo este cambia
+  playTone(t.freq, t.type, alteredGain, now+1.5);
 
-  // SEGUNDO sonido: SIEMPRE el modificado
-  playTone(t.freq, t.type, alteredGain, now + 1.5);
-
-  // Determinar respuesta correcta
-  if (t.step > 0) {
-    t.correct = 2; // segundo más fuerte
-  } else if (t.step < 0) {
-    t.correct = 1; // primero más fuerte
-  } else {
-    t.correct = 0; // iguales
-  }
+  if(t.step>0) t.correct=2;
+  else if(t.step<0) t.correct=1;
+  else t.correct=0;
 
   document.getElementById("question").classList.remove("hidden");
 }
@@ -151,7 +140,7 @@ function playTrial(){
 function answer(c){
   currentTrial++;
   document.getElementById("question").classList.add("hidden");
-  if(currentTrial>=trials.length){alert("Fin");}
+  if(currentTrial>=trials.length){alert("Fin del experimento");}
 }
 
 function goCalibration(){
