@@ -112,12 +112,12 @@ let currentTrial = 0;
 let results = [];
 let userData = {};
 
-// Generar trials: 5 variaciones únicas por tipo de onda y frecuencia + 1 sin diferencia
+// Generar trials: 5 variaciones únicas por tipo de onda y frecuencia
 function generateTrials() {
   trials = [];
   types.forEach(type => {
+    const usedSteps = new Set();
     freqs.forEach(freq => {
-      const usedSteps = new Set();
       for (let i = 1; i <= 5; i++) {
         let step;
         do {
